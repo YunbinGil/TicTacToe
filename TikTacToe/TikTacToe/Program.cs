@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Reflection.Metadata.Ecma335;
+using System.Linq;
 using System.Threading;
-using System.Xml;
-using System.Xml.Schema;
 
 class Program
 {
@@ -19,7 +17,7 @@ class Program
         {
             Console.Clear();
             SetupGame(oxBoard, out modeSelected, out level);
-            playAgain = StartGame(modeSelected, oxBoard);
+            playAgain = StartGame(modeSelected, oxBoard, level);
         }
 
     }
@@ -34,17 +32,16 @@ class Program
         }
     }
 
-    static bool ComputerTurn(char ox, int mode, char[] board)
+    static bool ComputerTurn(char ox, int mode, int level, char[] board)
     {
         Console.WriteLine($"컴퓨터({ox})의 차례입니다.");
         
         int pos=0;
-        if (mode == 2)
-        {
+        if (level == 1)
             pos = GetRandomEmptyPos(board);
-            board[pos] = ox;
-
-        }
+        else
+            pos = GetComputerPos(board);
+        board[pos] = ox;
         Thread.Sleep(1000);
         PrintScreen(mode, board);
         Console.WriteLine($"컴퓨터: {pos+1}번 선택");
@@ -54,27 +51,89 @@ class Program
 
     static bool CheckWinCondition(char[] board, char ox)
     {
-        string boardStr = new string(board);
+        string[] boardStrs = GetStringsFromBoard(board);
         string winStr = new string(ox, 3);
         bool isOver = false;
-
-        if (boardStr.Substring(0, 3) == winStr || boardStr.Substring(3, 3) == winStr || boardStr.Substring(6, 3) == winStr
-            || $"{board[0]}{board[4]}{board[8]}" == winStr || $"{board[2]}{board[4]}{board[6]}" == winStr)
+        
+        for(int i = 0; i<boardStrs.Length; i++)
         {
-            isOver = true;
+            if (boardStrs[i] == winStr) isOver = true;
+        }
+        
+
+        return isOver;
+    }
+
+    static int GetComputerPos(char[] board)
+    {
+        string[] possible = { ".OO", "O.O", "OO." };
+        string[] blockable = { ".XX", "X.X", "XX." };
+        int n = -1; 
+        string[] strings = GetStringsFromBoard(board);
+
+        //1. 컴퓨터 O가 바로 승리할 수 있는 칸
+        n = GetPos(strings, possible);
+        if (n >= 0) return n;
+
+        //2.다음수에 X가 바로 승리할 수 있는 칸을 막기
+        n = GetPos(strings, blockable);
+        if (n >= 0) return n;
+
+        //3. 5번 비어있으면 5
+        if (board[4] == '.') return 4;
+
+        //4. 모서리(1,3,7,9) 중에
+        for (int i = 1; i < 10; i+=2)
+        {
+            if (board[i] == '.') return i;
+        }
+        //5. 남은 빈칸 중 하나.
+        for (int i = 0; i < board.Length; i++)
+        {
+            if (board[i] == '.') return i;
         }
 
-        for (int i = 0; i < 3; i++)
+        return n;
+    }
+
+    static int GetPos(string[] boardstrings, string[] checkStrings)
+    {
+        int stringIndex = -1;
+        int shape = -1;
+        for (int i = 0; i < boardstrings.Length; i++)
         {
-            string colStr = $"{board[i]}{board[i + 3]}{board[i + 6]}";
-            if (colStr == winStr)
+            if (checkStrings.Contains(boardstrings[i]))
             {
-                isOver = true;
+                stringIndex = i;
+                string matcehdStr = boardstrings[i];
+                    for (int j = 0; j < 3; j++)
+                {
+                    if (matcehdStr[j] == '.')
+                    {
+                        shape = j;
+                        break;
+                    }
+                }
                 break;
             }
         }
-
-        return isOver;
+        if (stringIndex < 3)
+        {
+            return stringIndex * 3 + shape;
+        }
+        else if (stringIndex < 6)
+        {
+            return shape * 3 + (stringIndex - 3);
+        }
+        else if (stringIndex == 6)
+        {
+            return shape * 4;
+        }
+        else if (stringIndex == 7)
+        {
+            return (shape + 1) * 2;
+        }
+        return -1;
     }
     static int GetRandomEmptyPos(char[] board)
     {
@@ -85,6 +144,20 @@ class Program
         }
         return n;
     }
+    static string[] GetStringsFromBoard(char[] board)
+    {
+        string str = new string(board);
+        string[] strings = new string[8];
+        for (int i = 0; i < 3; i++)
+        {
+            strings[i] = str.Substring(i*3, 3);
+            strings[i + 3] = $"{board[i]}{board[i + 3]}{board[i+6]}";
+        }
+        strings[6] = $"{board[0]}{board[4]}{board[8]}";
+        strings[7] = $"{board[2]}{board[4]}{board[6]}";
+
+        return strings;
+    }
 
 
     static bool PlayerTurn(char ox, int mode, char[] board)
@@ -93,11 +166,11 @@ class Program
 
         while (true)
         {
-            int pos = ReadIntegerCheck("위치를 선택하세요", 1, 9);
+            int pos = ReadIntegerCheck("위치를 선택하세요", 1, 9)-1;
 
-            if (board[pos - 1] == '.')
+            if (board[pos] == '.')
             {
-                board[pos - 1] = ox;
+                board[pos] = ox;
                 break;
             }
             else Console.WriteLine("이미 선택한 칸입니다 빈칸을 선택하세요.");
@@ -151,7 +224,7 @@ class Program
 
     }
 
-    static bool StartGame(int mode, char[] board)
+    static bool StartGame(int mode, char[] board, int level)
     {
         PrintScreen(mode, board);
         bool isOver = false;
@@ -168,7 +241,7 @@ class Program
                 if (mode == 1)
                     isOver = PlayerTurn('O', mode, board);
                 else if (mode == 2)
-                    isOver = ComputerTurn('O', mode, board);
+                    isOver = ComputerTurn('O', mode, level, board);
                 ;
             }
             if (isOver) break;
