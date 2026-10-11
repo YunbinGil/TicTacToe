@@ -83,17 +83,13 @@ class Program
         if (board[4] == '.') return 4;
 
         //4. 모서리(1,3,7,9) 중에
-        for (int i = 1; i < 10; i+=2)
+        int[] corners = { 0, 2, 6, 8 };
+        foreach (int i in corners)
         {
             if (board[i] == '.') return i;
         }
         //5. 남은 빈칸 중 하나.
-        for (int i = 0; i < board.Length; i++)
-        {
-            if (board[i] == '.') return i;
-        }
-
-        return n;
+        return Array.IndexOf(board, '.');
     }
 
     static int GetPos(string[] boardstrings, string[] checkStrings)
