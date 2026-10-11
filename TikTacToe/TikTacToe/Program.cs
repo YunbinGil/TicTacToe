@@ -6,6 +6,13 @@ class Program
 {
     private static Random random = new Random();
 
+    static readonly int[][] winLines = new int[][]
+    {
+        new int[] {0,1,2},new int[] {3,4,5},new int[] {6,7,8},
+        new int[] {0,3,6},new int[] {1,4,7},new int[] {2,5,8},
+        new int[] {0,4,8},new int[] {2,4,6}
+    };
+
     static void Main()
     {
         char[] oxBoard = new char[9];
@@ -51,33 +58,27 @@ class Program
 
     static bool CheckWinCondition(char[] board, char ox)
     {
-        string[] boardStrs = GetStringsFromBoard(board);
-        string winStr = new string(ox, 3);
-        bool isOver = false;
-        
-        for(int i = 0; i<boardStrs.Length; i++)
+        foreach(var line in winLines)
         {
-            if (boardStrs[i] == winStr) isOver = true;
+            if (board[line[0]] == ox && board[line[1]] == ox && board[line[2]] == ox) return true;
         }
-        
-
-        return isOver;
+        return false;
     }
 
     static int GetComputerPos(char[] board)
     {
         string[] possible = { ".OO", "O.O", "OO." };
         string[] blockable = { ".XX", "X.X", "XX." };
-        int n = -1; 
+        int pos = -1; 
         string[] strings = GetStringsFromBoard(board);
 
         //1. 컴퓨터 O가 바로 승리할 수 있는 칸
-        n = GetPos(strings, possible);
-        if (n >= 0) return n;
+        pos = GetPos(board, 'O');
+        if (pos >= 0) return pos;
 
         //2.다음수에 X가 바로 승리할 수 있는 칸을 막기
-        n = GetPos(strings, blockable);
-        if (n >= 0) return n;
+        pos = GetPos(board, 'X');
+        if (pos >= 0) return pos;
 
         //3. 5번 비어있으면 5
         if (board[4] == '.') return 4;
@@ -92,42 +93,26 @@ class Program
         return Array.IndexOf(board, '.');
     }
 
-    static int GetPos(string[] boardstrings, string[] checkStrings)
+    static int GetPos(char[] board, char ox)
     {
-        int stringIndex = -1;
-        int shape = -1;
-        for (int i = 0; i < boardstrings.Length; i++)
+        foreach(var line in winLines)
         {
-            if (checkStrings.Contains(boardstrings[i]))
+            int oxCount = 0;
+            int emptyCount = 0;
+            int emptyIndex = -1;
+
+            foreach (int idx in line)
             {
-                stringIndex = i;
-                string matcehdStr = boardstrings[i];
-                    for (int j = 0; j < 3; j++)
+                if (board[idx] == ox) oxCount++;
+                else if (board[idx] == '.')
                 {
-                    if (matcehdStr[j] == '.')
-                    {
-                        shape = j;
-                        break;
-                    }
+                    emptyCount++;
+                    emptyIndex = idx;
                 }
-                break;
             }
-        }
-        if (stringIndex < 3)
-        {
-            return stringIndex * 3 + shape;
-        }
-        else if (stringIndex < 6)
-        {
-            return shape * 3 + (stringIndex - 3);
-        }
-        else if (stringIndex == 6)
-        {
-            return shape * 4;
-        }
-        else if (stringIndex == 7)
-        {
-            return (shape + 1) * 2;
+
+            if(oxCount == 2 && emptyCount == 1)
+                return emptyIndex;
         }
         return -1;
     }
