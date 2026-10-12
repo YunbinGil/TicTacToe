@@ -16,8 +16,8 @@ class Program
     static void Main()
     {
         char[] oxBoard = new char[9];
-        int modeSelected = 0;
-        int level = 0;
+        int modeSelected;
+        int level;
         bool playAgain = true;
         
         while (playAgain)
@@ -67,10 +67,7 @@ class Program
 
     static int GetComputerPos(char[] board)
     {
-        string[] possible = { ".OO", "O.O", "OO." };
-        string[] blockable = { ".XX", "X.X", "XX." };
-        int pos = -1; 
-        string[] strings = GetStringsFromBoard(board);
+        int pos; 
 
         //1. 컴퓨터 O가 바로 승리할 수 있는 칸
         pos = GetPos(board, 'O');
@@ -209,7 +206,7 @@ class Program
     {
         PrintScreen(mode, board);
         bool isOver = false;
-        int turn = 0;
+        int turn;
 
         for (turn = 0; turn < 9; turn++)
         {
