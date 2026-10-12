@@ -244,9 +244,9 @@ class Program
                 Console.WriteLine("컴퓨터 승리!");
             }
         }
-        Console.Write("새 게임을 시작하시겠습니까? (Y/N): ");
-        string input = Console.ReadLine().Trim().ToUpper();
-        while (input.Length > 1 || (input!="Y" && input != "N"))
+
+        string input = "";
+        while (input!="Y" && input != "N")
         {
             Console.Write("새 게임을 시작하시겠습니까? (Y/N):");
             input = Console.ReadLine().Trim().ToUpper();
